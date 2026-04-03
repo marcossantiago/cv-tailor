@@ -6,9 +6,7 @@
  * Returns: SSE stream from OpenAI Chat Completions
  */
 
-const ALLOWED_ORIGINS = [
-  'https://YOUR_GITHUB_USERNAME.github.io', // update after deploying to GitHub Pages
-];
+import { ALLOWED_ORIGINS } from './config.js';
 
 function corsHeaders(origin) {
   const allowed =
