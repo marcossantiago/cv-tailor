@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CV Tailor — AI-Powered CV Rewriter</title>
+  <script src="config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -472,14 +473,6 @@
     <div class="panel-body">
 
       <div class="field">
-        <label>Worker URL <span>(your deployed Cloudflare Worker)</span></label>
-        <input type="text" id="workerUrl" placeholder="https://cv-tailor.<your-subdomain>.workers.dev" />
-        <p class="hint">Deploy the worker from <code>worker/index.js</code> and paste its URL here.</p>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="field">
         <label>OpenAI API Key</label>
         <div class="api-key-wrap">
           <input type="password" id="apiKey" placeholder="sk-proj-..." autocomplete="off" />
@@ -557,14 +550,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  // ── Persist worker URL in localStorage ──
-  const workerUrlInput = document.getElementById('workerUrl');
-  const savedUrl = localStorage.getItem('cv_tailor_worker_url');
-  if (savedUrl) workerUrlInput.value = savedUrl;
-  workerUrlInput.addEventListener('input', () => {
-    localStorage.setItem('cv_tailor_worker_url', workerUrlInput.value.trim());
-  });
-
   function toggleApiKeyVisibility() {
     const input = document.getElementById('apiKey');
     const icon = document.getElementById('eyeIcon');
@@ -599,13 +584,13 @@
   }
 
   async function generate() {
-    const workerUrl = document.getElementById('workerUrl').value.trim();
+    const workerUrl = CONFIG.workerUrl;
     const apiKey    = document.getElementById('apiKey').value.trim();
     const systemPrompt = document.getElementById('systemPrompt').value.trim();
     const jobPosition  = document.getElementById('jobPosition').value.trim();
     const currentCV    = document.getElementById('currentCV').value.trim();
 
-    if (!workerUrl)    return showToast('Please enter your Cloudflare Worker URL.');
+    if (!workerUrl)    return showToast('Worker URL is not configured. Deploy the Cloudflare Worker first.');
     if (!apiKey)       return showToast('Please enter your OpenAI API Key.');
     if (!jobPosition)  return showToast('Please describe the job position.');
     if (!currentCV)    return showToast('Please paste your current CV.');
