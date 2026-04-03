@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CV Tailor — AI-Powered CV Rewriter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface-2: #22263a;
+      --border: #2e3347;
+      --accent: #6c63ff;
+      --accent-hover: #7d75ff;
+      --accent-dim: rgba(108, 99, 255, 0.15);
+      --text: #e2e4f0;
+      --text-muted: #7b80a0;
+      --text-label: #a0a5c0;
+      --success: #34d399;
+      --error: #f87171;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap');
+
+    html, body {
+      height: 100%;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 10;
+    }
+
+    .logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-left: 2px;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .header-badge {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      padding: 3px 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── Layout ── */
+    .app {
+      display: flex;
+      height: calc(100vh - 65px);
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .panel-left {
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .panel-right {
+      background: var(--bg);
+    }
+
+    .panel-header {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-header .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-body::-webkit-scrollbar { width: 6px; }
+    .panel-body::-webkit-scrollbar-track { background: transparent; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Form fields ── */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-label);
+      letter-spacing: 0.3px;
+    }
+
+    label span {
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13.5px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      resize: vertical;
+      width: 100%;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 0.7; }
+
+    textarea { min-height: 100px; }
+    textarea.tall { min-height: 160px; }
+    textarea.system-prompt { min-height: 130px; font-size: 13px; }
+
+    .api-key-wrap {
+      position: relative;
+    }
+
+    .api-key-wrap input {
+      padding-right: 42px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      letter-spacing: 0.5px;
+    }
+
+    .toggle-vis {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      transition: color 0.15s;
+    }
+
+    .toggle-vis:hover { color: var(--text); }
+
+    /* ── Worker URL hint ── */
+    .hint {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .hint code {
+      font-family: var(--mono);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    /* ── Button ── */
+    .btn-generate {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 4px 20px rgba(108, 99, 255, 0.3);
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .btn-generate:hover:not(:disabled) {
+      background: var(--accent-hover);
+      box-shadow: 0 6px 24px rgba(108, 99, 255, 0.45);
+    }
+
+    .btn-generate:active:not(:disabled) { transform: scale(0.99); }
+
+    .btn-generate:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Right panel output ── */
+    .output-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .output-wrap::-webkit-scrollbar { width: 6px; }
+    .output-wrap::-webkit-scrollbar-track { background: transparent; }
+    .output-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .output-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .output-placeholder svg {
+      opacity: 0.25;
+    }
+
+    .output-placeholder p {
+      font-size: 14px;
+    }
+
+    .output-placeholder small {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .output-content {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .output-content.visible {
+      display: flex;
+    }
+
+    .output-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .output-toolbar .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+    }
+
+    .status-dot.loading {
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .btn-copy {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-label);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+
+    .cv-output {
+      white-space: pre-wrap;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.75;
+      color: var(--text);
+      padding: 24px;
+    }
+
+    /* streaming cursor */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--accent);
+      animation: blink 0.8s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 2px;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Error toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #2a1a1a;
+      border: 1px solid var(--error);
+      color: var(--error);
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 100;
+      max-width: 420px;
+      text-align: center;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      html, body { overflow: auto; }
+      .app { flex-direction: column; height: auto; }
+      .panel { min-height: 50vh; }
+      .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+    </div>
+    <div>
+      <h1>CV Tailor</h1>
+      <p>AI-powered CV rewriter for job positions</p>
+    </div>
+  </div>
+  <span class="header-badge">AI</span>
+</header>
+
+<div class="app">
+
+  <!-- ── Left Panel: Inputs ── -->
+  <div class="panel panel-left">
+    <div class="panel-header">
+      <div class="dot"></div>
+      Configuration
+    </div>
+    <div class="panel-body">
+
+      <div class="field">
+        <label>Worker URL <span>(your deployed Cloudflare Worker)</span></label>
+        <input type="text" id="workerUrl" placeholder="https://cv-tailor.<your-subdomain>.workers.dev" />
+        <p class="hint">Deploy the worker from <code>worker/index.js</code> and paste its URL here.</p>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label>OpenAI API Key</label>
+        <div class="api-key-wrap">
+          <input type="password" id="apiKey" placeholder="sk-proj-..." autocomplete="off" />
+          <button class="toggle-vis" onclick="toggleApiKeyVisibility()" title="Show/hide">
+            <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>System Prompt <span>(instructions for the AI)</span></label>
+        <textarea id="systemPrompt" class="system-prompt" placeholder="You are an expert CV writer. Rewrite the provided CV to best match the given job position, highlighting relevant skills and experience. Keep it professional and ATS-friendly.">You are an expert CV writer. Rewrite the provided CV to best match the given job position, highlighting relevant skills and experience. Keep it professional and ATS-friendly. Return only the rewritten CV text with no additional commentary.</textarea>
+      </div>
+
+      <div class="field">
+        <label>Job Position</label>
+        <textarea id="jobPosition" rows="3" placeholder="Senior Frontend Engineer at Acme Corp — React, TypeScript, 5+ years experience..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Current CV</label>
+        <textarea id="currentCV" class="tall" placeholder="Paste your current CV here..."></textarea>
+      </div>
+
+      <button class="btn-generate" id="generateBtn" onclick="generate()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        Generate Tailored CV
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── Right Panel: Output ── -->
+  <div class="panel panel-right">
+    <div id="outputToolbar" class="output-toolbar" style="display:none;">
+      <div class="status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Ready</span>
+      </div>
+      <button class="btn-copy" onclick="copyOutput()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copy
+      </button>
+    </div>
+
+    <div class="output-wrap">
+      <div class="output-placeholder" id="outputPlaceholder">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+        <p>Your rewritten CV will appear here</p>
+        <small>Fill in the form and click Generate</small>
+      </div>
+
+      <div class="output-content" id="outputContent">
+        <pre class="cv-output" id="cvOutput"></pre>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Persist worker URL in localStorage ──
+  const workerUrlInput = document.getElementById('workerUrl');
+  const savedUrl = localStorage.getItem('cv_tailor_worker_url');
+  if (savedUrl) workerUrlInput.value = savedUrl;
+  workerUrlInput.addEventListener('input', () => {
+    localStorage.setItem('cv_tailor_worker_url', workerUrlInput.value.trim());
+  });
+
+  function toggleApiKeyVisibility() {
+    const input = document.getElementById('apiKey');
+    const icon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.innerHTML = `
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>
+      `;
+    } else {
+      input.type = 'password';
+      icon.innerHTML = `
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      `;
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  function copyOutput() {
+    const text = document.getElementById('cvOutput').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copied to clipboard!');
+    });
+  }
+
+  async function generate() {
+    const workerUrl = document.getElementById('workerUrl').value.trim();
+    const apiKey    = document.getElementById('apiKey').value.trim();
+    const systemPrompt = document.getElementById('systemPrompt').value.trim();
+    const jobPosition  = document.getElementById('jobPosition').value.trim();
+    const currentCV    = document.getElementById('currentCV').value.trim();
+
+    if (!workerUrl)    return showToast('Please enter your Cloudflare Worker URL.');
+    if (!apiKey)       return showToast('Please enter your OpenAI API Key.');
+    if (!jobPosition)  return showToast('Please describe the job position.');
+    if (!currentCV)    return showToast('Please paste your current CV.');
+
+    const btn = document.getElementById('generateBtn');
+    const placeholder = document.getElementById('outputPlaceholder');
+    const outputContent = document.getElementById('outputContent');
+    const toolbar = document.getElementById('outputToolbar');
+    const cvOutput = document.getElementById('cvOutput');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+
+    // UI: loading state
+    btn.disabled = true;
+    btn.innerHTML = `<div class="spinner"></div> Generating…`;
+    placeholder.style.display = 'none';
+    outputContent.classList.add('visible');
+    toolbar.style.display = 'flex';
+    cvOutput.textContent = '';
+    statusDot.className = 'status-dot loading';
+    statusText.textContent = 'Generating…';
+
+    // Add blinking cursor
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    cvOutput.appendChild(cursor);
+
+    try {
+      const response = await fetch(workerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey, systemPrompt, jobPosition, currentCV }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(err.error || `HTTP ${response.status}`);
+      }
+
+      // Stream the response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // keep incomplete line
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const json = JSON.parse(data);
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) {
+              cvOutput.insertBefore(document.createTextNode(delta), cursor);
+            }
+          } catch {}
+        }
+      }
+
+      // Process remaining buffer
+      if (buffer.startsWith('data: ')) {
+        const data = buffer.slice(6).trim();
+        if (data && data !== '[DONE]') {
+          try {
+            const json = JSON.parse(data);
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) cvOutput.insertBefore(document.createTextNode(delta), cursor);
+          } catch {}
+        }
+      }
+
+      cursor.remove();
+      statusDot.className = 'status-dot';
+      statusText.textContent = 'Done';
+
+    } catch (err) {
+      cursor.remove();
+      statusDot.className = 'status-dot';
+      statusDot.style.background = 'var(--error)';
+      statusDot.style.boxShadow = '0 0 6px var(--error)';
+      statusText.textContent = 'Error';
+      showToast('Error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        Generate Tailored CV`;
+    }
+  }
+</script>
+</body>
+</html>

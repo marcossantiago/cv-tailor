@@ -1,0 +1,8 @@
+name = "cv-tailor"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Uncomment to set a custom route:
+# [routes]
+# pattern = "cv-tailor.yourdomain.com/*"
+# zone_name = "yourdomain.com"
