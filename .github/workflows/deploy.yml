@@ -22,6 +22,7 @@ jobs:
           OWNER="${{ github.repository_owner }}"
           REPO="${{ github.event.repository.name }}"
           PAGES_ORIGIN="https://${OWNER}.github.io"
+
           # If the repo name is not the user/org root site, Pages serves under a subpath
           # but the Origin header is always just the scheme+host, so one entry covers all.
           cat > worker/config.js <<EOF
